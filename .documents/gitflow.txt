@@ -15,3 +15,8 @@ git status
 # Push initial release to remote repository
 git remote add origin https://github.com/fredrik-stigsson/what-am-i-drawing.git
 git push -u origin main
+
+# Update
+git add .
+git commit -m 'Text to update'
+git push -u origin main

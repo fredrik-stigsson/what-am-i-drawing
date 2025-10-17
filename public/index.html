@@ -745,7 +745,7 @@
     </div>
 
     <!-- Socket.IO Client Library -->
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="socket.io/socket.io.js"></script>
     <script>
         // Game state
         const gameState = {
@@ -835,7 +835,11 @@
 
         // Setup Socket.IO connection
         function setupSocket() {
-            gameState.socket = io();
+            
+            //gameState.socket = io();
+            gameState.socket = io({
+                path: '/what-am-i-drawing/socket.io'
+            });
             
             gameState.socket.on('connect', () => {
                 console.log('Connected to server');
