@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Am I Drawing?</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+        }
+
+        /* Main Menu Styles */
+        .main-menu {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-menu {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .menu-card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Rooms List */
+        .rooms-list {
+            max-height: 400px;
+            margin: 15px 0;
+        }
+
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            max-width: 100%;
+        }
+
+        .room-item:hover {
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+
+        .room-info {
+            flex: 1;
+        }
+
+        .room-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .room-details {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .room-language {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .btn-join {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-join:hover {
+            background: #219a52;
+        }
+
+        .no-rooms {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            font-style: italic;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+        }
+
+        /* Game Area Styles */
+        .game-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .drawing-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 3px solid #3498db;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #drawingCanvas {
+            background-color: white;
+            cursor: crosshair;
+            width: 100%;
+            height: auto;
+            touch-action: none;
+            display: block;
+        }
+
+        .tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .tools-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .tools-section label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .color-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+            border-color: #999;
+        }
+
+        .color-btn.active {
+            border-color: #333;
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .brush-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #brushSize {
+            width: 100px;
+        }
+
+        .brush-size-value {
+            font-size: 0.9rem;
+            color: #6c757d;
+            min-width: 25px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .players-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .players-list {
+            margin: 20px 0 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 2px solid #f8f9fa;
+            transition: background 0.3s;
+        }
+
+        .player :first-child {
+            width: 50%;
+        }
+
+        .player:hover {
+            background: #f8f9fa;
+        }
+
+        .player.current {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+        }
+
+        .player.drawing {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .player.host::after {
+            content: " 👑";
+            width: 22px;
+            text-align: center;
+        }
+
+        .player.guest::after {
+            content: " 👤";
+            width: 22px;
+            text-align: center;
+        }
+
+        .chat-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            height: fit-content;
+            margin-bottom: 20px;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .message.system {
+            background: #e9ecef;
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .message.correct {
+            background: #d4edda;
+            color: #155724;
+            font-weight: bold;
+            border-left: 4px solid #28a745;
+        }
+
+        .message.player {
+            background: white;
+            border-left: 4px solid #3498db;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        #messageInput:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .score {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .word-to-draw {
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 15px 0;
+            color: #3498db;
+            font-weight: bold;
+            min-height: 40px;
+            padding: 10px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            border: 2px dashed #3498db;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .winner-section {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .winner-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .winner-section p {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+        }
+
+        /* Join Room Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+        }
+
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+
+        /* Room Status Badges */
+        .room-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status-waiting {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-playing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>What Am I Drawing?</h1>
+            <p class="subtitle">Draw and guess words together with your friends in real time!</p>
+        </header>
+        
+        <!-- Main Menu -->
+        <div id="mainMenu">
+            <div class="main-menu">
+                <!-- Create Room Card -->
+                <div class="menu-card">
+                    <h2>Create New Room</h2>
+                    <div class="form-group">
+                        <label for="createPlayerName">Your Name:</label>
+                        <input type="text" id="createPlayerName" placeholder="Enter your name" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="roomName">Room Name:</label>
+                        <input type="text" id="roomName" placeholder="Enter room name" maxlength="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="roomLanguage">Room Language:</label>
+                        <select id="roomLanguage">
+                            <option value="en">English</option>
+                            <option value="sv">Svenska</option>
+                        </select>
+                    </div>
+                    <button id="createRoomBtn" class="btn-primary">Create New Room</button>
+                </div>
+                
+                <!-- Available Rooms Card -->
+                <div class="menu-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Available Rooms</h2>
+                        <button id="refreshRoomsBtn" class="btn-secondary">Refresh</button>
+                    </div>
+                    <div id="roomsList" class="rooms-list">
+                        <div id="noRoomsMessage" class="no-rooms">No available rooms right now</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Area -->
+        <div id="gameArea" class="hidden">
+            <div class="game-info">
+                <div id="roomInfo" class="score"></div>
+                <div id="timer" class="timer">60</div>
+                <div id="yourScore" class="score">Your score: 0</div>
+            </div>
+            
+            <div class="game-area">
+                <!-- Left Column: Drawing Area -->
+                <div class="drawing-section">
+                    <h2>Drawing Area</h2>
+                    <div id="wordToDraw" class="word-to-draw"></div>
+                    <div class="canvas-container">
+                        <canvas id="drawingCanvas"></canvas>
+                    </div>
+                    <div class="tools">
+                        <div class="tools-section">
+                            <label>Color:</label>
+                            <div class="color-buttons">
+                                <div class="color-btn active" style="background-color: #000000;" data-color="#000000" title="Black"></div>
+                                <div class="color-btn" style="background-color: #ff0000;" data-color="#ff0000" title="Red"></div>
+                                <div class="color-btn" style="background-color: #0000ff;" data-color="#0000ff" title="Blue"></div>
+                                <div class="color-btn" style="background-color: #008000;" data-color="#008000" title="Green"></div>
+                                <div class="color-btn" style="background-color: #ffa500;" data-color="#ffa500" title="Orange"></div>
+                                <div class="color-btn" style="background-color: #800080;" data-color="#800080" title="Purple"></div>
+                                <div class="color-btn" style="background-color: #ffffff; border: 2px solid #333;" data-color="#ffffff" title="Eraser"></div>
+                            </div>
+                        </div>
+                        <div class="tools-section">
+                            <label>Size:</label>
+                            <div class="brush-controls">
+                                <input type="range" id="brushSize" min="1" max="50" value="5">
+                                <span id="brushSizeValue" class="brush-size-value">5</span>
+                            </div>
+                        </div>
+                        <div class="tools-section">
+                            <div class="action-buttons">
+                                <button id="clearCanvasBtn" class="btn-secondary">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Chat and Players -->
+                <div>
+
+                    <!-- Chat Section -->
+                    <div class="chat-section">
+                        <h2>Guess Chat</h2>
+                        <div id="chatMessages" class="chat-messages"></div>
+                        <div class="chat-input">
+                            <input type="text" id="messageInput" placeholder="Type your guess here...">
+                            <button id="sendMessageBtn" class="btn-primary">Send</button>
+                        </div>
+                    </div>
+
+                    <!-- Players Section -->
+                    <div class="players-section">
+                        <h2>Players in Room</h2>
+                        <div id="playersList" class="players-list"></div>
+                        <div class="action-buttons">
+                            <button id="startGameBtn" class="btn-primary">Start Game</button>
+                            <button id="leaveRoomBtn" class="btn-secondary">Leave Room</button>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <!-- Winner Section -->
+        <div id="winnerSection" class="winner-section hidden">
+            <h2 id="congratulationsText">Congratulations!</h2>
+            <p id="winnerMessage"></p>
+            <div class="action-buttons">
+                <button id="backToLobbyBtn" class="btn-primary">Back to Lobby</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Room Modal -->
+    <div id="joinRoomModal" class="modal">
+        <div class="modal-content">
+            <h3>Join Room</h3>
+            <div class="form-group">
+                <label for="joinPlayerName">Enter your name:</label>
+                <input type="text" id="joinPlayerName" placeholder="Your name" maxlength="20">
+            </div>
+            <div class="modal-actions">
+                <button id="confirmJoinBtn" class="btn-primary">Join</button>
+                <button id="cancelJoinBtn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.IO Client Library -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Game state
+        const gameState = {
+            socket: null,
+            currentRoom: null,
+            currentPlayer: null,
+            players: [],
+            isDrawing: false,
+            isHost: false,
+            gameStarted: false,
+            currentLanguage: 'en',
+            selectedRoomId: null
+        };
+
+        // Canvas state
+        const canvasState = {
+            ctx: null,
+            isDrawing: false,
+            lastX: 0,
+            lastY: 0,
+            currentColor: '#000000',
+            currentBrushSize: 5,
+            canvasInitialized: false
+        };
+
+        // DOM Elements cache
+        let elements = {};
+
+        // Initialize the game
+        function init() {
+            initializeDOMElements();
+            setupSocket();
+            setupEventListeners();
+            //setupCanvas();
+            updateUI();
+        }
+
+        // Initialize all DOM elements
+        function initializeDOMElements() {
+            elements = {
+                // Main menu
+                mainMenu: document.getElementById('mainMenu'),
+                gameArea: document.getElementById('gameArea'),
+                winnerSection: document.getElementById('winnerSection'),
+                
+                // Create room
+                createPlayerName: document.getElementById('createPlayerName'),
+                roomName: document.getElementById('roomName'),
+                roomLanguage: document.getElementById('roomLanguage'),
+                createRoomBtn: document.getElementById('createRoomBtn'),
+                
+                // Rooms list
+                refreshRoomsBtn: document.getElementById('refreshRoomsBtn'),
+                roomsList: document.getElementById('roomsList'),
+                
+                // Game area
+                roomInfo: document.getElementById('roomInfo'),
+                timer: document.getElementById('timer'),
+                yourScore: document.getElementById('yourScore'),
+                wordToDraw: document.getElementById('wordToDraw'),
+                drawingCanvas: document.getElementById('drawingCanvas'),
+                clearCanvasBtn: document.getElementById('clearCanvasBtn'),
+                playersList: document.getElementById('playersList'),
+                startGameBtn: document.getElementById('startGameBtn'),
+                //resetGameBtn: document.getElementById('resetGameBtn'),
+                leaveRoomBtn: document.getElementById('leaveRoomBtn'),
+                chatMessages: document.getElementById('chatMessages'),
+                messageInput: document.getElementById('messageInput'),
+                sendMessageBtn: document.getElementById('sendMessageBtn'),
+                
+                // Winner section
+                congratulationsText: document.getElementById('congratulationsText'),
+                winnerMessage: document.getElementById('winnerMessage'),
+                backToLobbyBtn: document.getElementById('backToLobbyBtn'),
+                
+                // Join room modal
+                joinRoomModal: document.getElementById('joinRoomModal'),
+                joinPlayerName: document.getElementById('joinPlayerName'),
+                confirmJoinBtn: document.getElementById('confirmJoinBtn'),
+                cancelJoinBtn: document.getElementById('cancelJoinBtn'),
+                
+                // Canvas tools
+                brushSize: document.getElementById('brushSize'),
+                brushSizeValue: document.getElementById('brushSizeValue')
+            };
+        }
+
+        // Setup Socket.IO connection
+        function setupSocket() {
+            gameState.socket = io();
+            
+            gameState.socket.on('connect', () => {
+                console.log('Connected to server');
+            });
+
+            gameState.socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+            });
+
+            gameState.socket.on('connect_error', () => {
+                console.log('Connection error');
+            });
+
+            // Game event listeners
+            gameState.socket.on('room_created', handleRoomCreated);
+            gameState.socket.on('room_joined', handleRoomJoined);
+            gameState.socket.on('room_list_updated', handleRoomListUpdated);
+            gameState.socket.on('player_joined', handlePlayerJoined);
+            gameState.socket.on('player_left', handlePlayerLeft);
+            gameState.socket.on('game_started', handleGameStarted);
+            gameState.socket.on('game_reset', handleGameReset);
+            gameState.socket.on('new_round', handleNewRound);
+            gameState.socket.on('round_ended', handleRoundEnded);
+            gameState.socket.on('correct_guess', handleCorrectGuess);
+            gameState.socket.on('timer_update', handleTimerUpdate);
+            gameState.socket.on('game_ended', handleGameEnded);
+            gameState.socket.on('chat_message', handleChatMessage);
+            gameState.socket.on('canvas_updated', handleCanvasUpdated);
+            gameState.socket.on('error', handleError);
+            gameState.socket.on('left_room', handleLeftRoom);
+        }
+
+        // Setup event listeners with null checks
+        function setupEventListeners() {
+            // Main menu
+            if (elements.createRoomBtn) {
+                elements.createRoomBtn.addEventListener('click', createRoom);
+            }
+            
+            if (elements.refreshRoomsBtn) {
+                elements.refreshRoomsBtn.addEventListener('click', refreshRooms);
+            }
+
+            // Game controls
+            if (elements.startGameBtn) {
+                elements.startGameBtn.addEventListener('click', startGame);
+            }
+            
+            // if (elements.resetGameBtn) {
+            //     elements.resetGameBtn.addEventListener('click', resetGame);
+            // }
+            
+            if (elements.leaveRoomBtn) {
+                elements.leaveRoomBtn.addEventListener('click', leaveRoom);
+            }
+            
+            if (elements.sendMessageBtn) {
+                elements.sendMessageBtn.addEventListener('click', sendMessage);
+            }
+            
+            if (elements.messageInput) {
+                elements.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') sendMessage();
+                });
+            }
+
+            // Canvas tools
+            if (elements.clearCanvasBtn) {
+                elements.clearCanvasBtn.addEventListener('click', clearCanvas);
+            }
+            
+            // Color buttons - use event delegation
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('color-btn')) {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    canvasState.currentColor = e.target.dataset.color;
+                    if (canvasState.ctx) {
+                        canvasState.ctx.strokeStyle = canvasState.currentColor;
+                    }
+                }
+            });
+
+            // Brush size
+            if (elements.brushSize && elements.brushSizeValue) {
+                elements.brushSize.addEventListener('input', (e) => {
+                    canvasState.currentBrushSize = parseInt(e.target.value);
+                    elements.brushSizeValue.textContent = canvasState.currentBrushSize;
+                    if (canvasState.ctx) {
+                        canvasState.ctx.lineWidth = canvasState.currentBrushSize;
+                    }
+                });
+            }
+
+            // Winner section
+            if (elements.backToLobbyBtn) {
+                elements.backToLobbyBtn.addEventListener('click', backToLobby);
+            }
+
+            // Join room modal
+            if (elements.confirmJoinBtn) {
+                elements.confirmJoinBtn.addEventListener('click', confirmJoinRoom);
+            }
+            
+            if (elements.cancelJoinBtn) {
+                elements.cancelJoinBtn.addEventListener('click', hideJoinModal);
+            }
+        }
+
+        // Setup canvas for drawing
+        function setupCanvas() {
+            if (!elements.drawingCanvas) {
+                console.error('Canvas element not found');
+                return;
+            }
+
+            const canvas = elements.drawingCanvas;
+            canvasState.ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            const resizeCanvas = () => {
+                const container = canvas.parentElement;
+                if (container) {
+                    const rect = container.getBoundingClientRect();
+                    canvas.width = rect.width;
+                    canvas.height = 445;
+                    
+                    // Set initial canvas style
+                    canvasState.ctx.fillStyle = 'white';
+                    canvasState.ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    canvasState.ctx.lineJoin = 'round';
+                    canvasState.ctx.lineCap = 'round';
+                    canvasState.ctx.lineWidth = canvasState.currentBrushSize;
+                    canvasState.ctx.strokeStyle = canvasState.currentColor;
+                    canvasState.canvasInitialized = true;
+                }
+            };
+
+            // Initial resize
+            setTimeout(() => {
+                resizeCanvas();
+            }, 100);
+
+            window.addEventListener('resize', resizeCanvas);
+
+            // Mouse events
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Touch events for mobile
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        // Drawing functions
+        function startDrawing(e) {
+            if (!gameState.isDrawing || !canvasState.canvasInitialized) return;
+            
+            e.preventDefault();
+            canvasState.isDrawing = true;
+            const pos = getMousePos(e);
+            [canvasState.lastX, canvasState.lastY] = [pos.x, pos.y];
+
+            // Start with a dot
+            canvasState.ctx.beginPath();
+            canvasState.ctx.arc(canvasState.lastX, canvasState.lastY, canvasState.currentBrushSize / 2, 0, Math.PI * 2);
+            canvasState.ctx.fillStyle = canvasState.currentColor;
+            canvasState.ctx.fill();
+        }
+
+        function draw(e) {
+            if (!canvasState.isDrawing || !gameState.isDrawing || !canvasState.canvasInitialized) return;
+            
+            e.preventDefault();
+            const pos = getMousePos(e);
+
+            canvasState.ctx.beginPath();
+            canvasState.ctx.moveTo(canvasState.lastX, canvasState.lastY);
+            canvasState.ctx.lineTo(pos.x, pos.y);
+            canvasState.ctx.strokeStyle = canvasState.currentColor;
+            canvasState.ctx.lineWidth = canvasState.currentBrushSize;
+            canvasState.ctx.stroke();
+            
+            [canvasState.lastX, canvasState.lastY] = [pos.x, pos.y];
+            
+            // Send canvas data to server
+            const canvasData = elements.drawingCanvas.toDataURL();
+            gameState.socket.emit('update_canvas', { canvasData });
+        }
+
+        function stopDrawing() {
+            canvasState.isDrawing = false;
+        }
+
+        function handleTouchStart(e) {
+            if (!gameState.isDrawing) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            elements.drawingCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function handleTouchMove(e) {
+            if (!gameState.isDrawing) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            elements.drawingCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function getMousePos(e) {
+
+            const rect = elements.drawingCanvas.getBoundingClientRect();
+            const scaleX = elements.drawingCanvas.width / rect.width;
+            const scaleY = elements.drawingCanvas.height / rect.height;
+            
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function clearCanvas() {
+            if (!canvasState.ctx || !canvasState.canvasInitialized) return;
+            
+            canvasState.ctx.fillStyle = 'white';
+            canvasState.ctx.fillRect(0, 0, elements.drawingCanvas.width, elements.drawingCanvas.height);
+            gameState.socket.emit('clear_canvas', {});
+        }
+
+        function clearChatMessages() {
+            if (elements.chatMessages) {
+                elements.chatMessages.innerHTML = '';
+            }
+        }
+
+        // Socket event handlers
+        function handleRoomCreated(data) {
+            gameState.currentRoom = data.room;
+            gameState.currentPlayer = data.player;
+            gameState.players = data.players;
+            gameState.isHost = true;
+            gameState.currentLanguage = data.room.language;
+            
+            updateUI();
+            showGameArea();
+            updatePlayersList();
+            addChatMessage('system', `${gameState.currentPlayer.name} joined the game`);
+        }
+
+        function handleRoomJoined(data) {
+            gameState.currentRoom = data.room;
+            gameState.currentPlayer = data.player;
+            gameState.players = data.players;
+            gameState.isHost = data.host === gameState.currentPlayer.id;
+            gameState.currentLanguage = data.room.language;
+            
+            updateUI();
+            showGameArea();
+            updatePlayersList();
+            addChatMessage('system', `${gameState.currentPlayer.name} joined the game`);
+        }
+
+        function handleRoomListUpdated(data) {
+            updateRoomsList(data.rooms);
+        }
+
+        function handlePlayerJoined(data) {
+            if (gameState.currentRoom && data.player && data.player.id) {
+                gameState.players = data.players;
+                gameState.isHost = data.host === gameState.currentPlayer.id;
+                updatePlayersList();
+                addChatMessage('system', `${data.player.name} joined the game`);
+            }
+        }
+
+        function handlePlayerLeft(data) {
+            if (gameState.currentRoom) {
+                gameState.players = data.players;
+                gameState.isHost = data.host === gameState.currentPlayer.id;
+                updatePlayersList();
+            }
+        }
+
+        function handleGameStarted(data) {
+            gameState.gameStarted = true;
+            gameState.gameState = data.gameState;
+            updateUI();
+        }
+
+        function handleGameReset(data) {
+            gameState.gameStarted = false;
+            gameState.gameState = null;
+            gameState.isDrawing = false;
+            gameState.players = data.players;
+            
+            clearCanvas();
+            clearChatMessages();
+            updateUI();
+            updatePlayersList();
+            if (elements.wordToDraw) {
+                elements.wordToDraw.textContent = '';
+            }
+            addChatMessage('system', 'Game has been reset');
+        }
+
+        function handleNewRound(data) {
+            gameState.gameState = data.gameState;
+            gameState.isDrawing = data.drawingPlayerId === gameState.currentPlayer.id;
+            
+            if (elements.wordToDraw) {
+                if (gameState.isDrawing) {
+                    elements.wordToDraw.textContent = `Draw: ${data.currentWord}`;
+                    addChatMessage('system', 'You are drawing, waiting for guesses...');
+                } else {
+                    elements.wordToDraw.textContent = 'Guess what is being drawn!';
+                    const drawingPlayer = gameState.players.find(p => p.id === data.drawingPlayerId);
+                    if (drawingPlayer) {
+                        addChatMessage('system', `New round! ${drawingPlayer.name} is now drawing.`);
+                    }
+                }
+            }
+            
+            clearCanvas();
+            updateUI();
+            updatePlayersList();
+        }
+
+        function handleRoundEnded(data) {
+            addChatMessage('system', `Round ended! The word was: ${data.word}`);
+        }
+
+        function handleCorrectGuess(data) {
+            addChatMessage('correct', `${data.guessingPlayer.name} guessed correctly! +${data.guessingPlayerPoints} points`);
+            addChatMessage('system', `${data.drawingPlayer.name} got ${data.drawingPlayerPoints} points`);
+            
+            if (gameState.gameState) {
+                gameState.gameState.scores = data.scores;
+                updatePlayersList();
+                updateScore();
+            }
+        }
+
+        function handleTimerUpdate(data) {
+            if (elements.timer) {
+                elements.timer.textContent = data.timer;
+            }
+        }
+
+        function handleGameEnded(data) {
+            gameState.gameStarted = false;
+            showWinnerSection(data.winner, data.winnerScore);
+        }
+
+        function handleChatMessage(data) {
+            addChatMessage('player', data.message, data.player);
+        }
+
+        function handleCanvasUpdated(data) {
+            if (gameState.isDrawing || !canvasState.canvasInitialized || !data.canvasData) return;
+            
+            const img = new Image();
+            img.onload = function() {
+                canvasState.ctx.clearRect(0, 0, elements.drawingCanvas.width, elements.drawingCanvas.height);
+                canvasState.ctx.drawImage(img, 0, 0);
+            };
+            img.src = data.canvasData;
+        }
+
+        function handleError(data) {
+            alert(data.message);
+        }
+
+        function handleLeftRoom() {
+            showMainMenu();
+            refreshRooms();
+        }
+
+        // UI functions
+        function showGameArea() {
+            if (elements.mainMenu) elements.mainMenu.classList.add('hidden');
+            if (elements.gameArea) elements.gameArea.classList.remove('hidden');
+            if (elements.winnerSection) elements.winnerSection.classList.add('hidden');
+            setupCanvas();
+        }
+
+        function showMainMenu() {
+            if (elements.mainMenu) elements.mainMenu.classList.remove('hidden');
+            if (elements.gameArea) elements.gameArea.classList.add('hidden');
+            if (elements.winnerSection) elements.winnerSection.classList.add('hidden');
+            
+            gameState.currentRoom = null;
+            gameState.currentPlayer = null;
+            gameState.players = [];
+            gameState.isHost = false;
+            gameState.gameStarted = false;
+            gameState.isDrawing = false;
+            gameState.selectedRoomId = null;
+        }
+
+        function showWinnerSection(winner, score) {
+            if (elements.congratulationsText) {
+                elements.congratulationsText.textContent = `Congratulations ${winner.name}!`;
+            }
+            if (elements.winnerMessage) {
+                elements.winnerMessage.textContent = `You won the game with ${score} points!`;
+            }
+            if (elements.gameArea) elements.gameArea.classList.add('hidden');
+            if (elements.winnerSection) elements.winnerSection.classList.remove('hidden');
+        }
+
+        function updatePlayersList() {
+            if (!elements.playersList) return;
+            
+            const playersList = elements.playersList;
+            playersList.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player';
+                
+                if (player.id === gameState.currentPlayer.id) {
+                    playerDiv.classList.add('current');
+                }
+                
+                if (gameState.gameState && gameState.gameState.drawingPlayerId === player.id) {
+                    playerDiv.classList.add('drawing');
+                }
+                
+                if (player.isHost) {
+                    playerDiv.classList.add('host');
+                }
+                else {
+                    playerDiv.classList.add('guest');
+                }
+                
+                const score = gameState.gameState ? gameState.gameState.scores[player.id] || 0 : 0;
+                
+                playerDiv.innerHTML = `
+                    <span>${player.name}</span>
+                    <span>${score} points</span>
+                `;
+                
+                playersList.appendChild(playerDiv);
+            });
+        }
+
+        function updateScore() {
+            if (elements.yourScore && gameState.gameState && gameState.currentPlayer) {
+                const score = gameState.gameState.scores[gameState.currentPlayer.id] || 0;
+                elements.yourScore.textContent = `Your score: ${score}`;
+            }
+        }
+
+        function updateRoomsList(rooms) {
+            if (!elements.roomsList) return;
+            
+            const roomsList = elements.roomsList;
+            const noRoomsMessage = document.getElementById('noRoomsMessage');
+            
+            if (rooms.length === 0) {
+                if (noRoomsMessage) noRoomsMessage.classList.remove('hidden');
+                roomsList.innerHTML = '';
+                return;
+            }
+            
+            if (noRoomsMessage) noRoomsMessage.classList.add('hidden');
+            roomsList.innerHTML = '';
+            
+            rooms.forEach(room => {
+                const roomDiv = document.createElement('div');
+                roomDiv.className = 'room-item';
+                
+                const statusText = room.status === 'waiting' ? 'Waiting for players' : 'Game in progress';
+                const statusClass = room.status === 'waiting' ? 'status-waiting' : 'status-playing';
+                const languageText = room.language === 'sv' ? 'Swedish' : 'English';
+                
+                roomDiv.innerHTML = `
+                    <div class="room-info">
+                        <div class="room-name">${room.name}</div>
+                        <div class="room-details">
+                            ${room.playerCount}/${room.maxPlayers} players • 
+                            Host: ${room.host}
+                            <span class="room-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="room-language">Language: ${languageText}</div>
+                    </div>
+                    <div class="room-actions">
+                        <button class="btn-join" onclick="showJoinModal('${room.id}')">Join</button>
+                    </div>
+                `;
+                
+                roomsList.appendChild(roomDiv);
+            });
+        }
+
+        function updateUI() {
+            // Update button states
+            if (elements.startGameBtn) {
+                elements.startGameBtn.disabled = !gameState.isHost || gameState.gameStarted;
+            }
+            
+            // if (elements.resetGameBtn) {
+            //     elements.resetGameBtn.disabled = !gameState.isHost || !gameState.gameStarted;
+            // }
+            
+            // Update room info
+            if (elements.roomInfo && gameState.currentRoom) {
+                const languageText = gameState.currentLanguage === 'sv' ? 'Swedish' : 'English';
+                elements.roomInfo.textContent = `Room: ${gameState.currentRoom.name} (${languageText})`;
+            }
+            
+            // Update canvas accessibility
+            if (elements.drawingCanvas) {
+                elements.drawingCanvas.style.cursor = gameState.isDrawing ? 'crosshair' : 'not-allowed';
+                elements.drawingCanvas.style.opacity = gameState.isDrawing ? '1' : '0.7';
+            }
+            
+            // Update chat input
+            if (elements.messageInput) {
+                elements.messageInput.disabled = gameState.isDrawing;
+                elements.messageInput.placeholder = gameState.isDrawing ? 
+                    'You are drawing, waiting for guesses...' : 
+                    'Type your guess here...';
+            }
+            
+            if (elements.sendMessageBtn) {
+                elements.sendMessageBtn.disabled = gameState.isDrawing;
+            }
+            
+            // Update score
+            updateScore();
+        }
+
+        // Modal functions
+        function showJoinModal(roomId) {
+            gameState.selectedRoomId = roomId;
+            if (elements.joinPlayerName) elements.joinPlayerName.value = '';
+            if (elements.joinRoomModal) elements.joinRoomModal.classList.add('show');
+        }
+
+        function hideJoinModal() {
+            if (elements.joinRoomModal) elements.joinRoomModal.classList.remove('show');
+            gameState.selectedRoomId = null;
+        }
+
+        function confirmJoinRoom() {
+            const playerName = elements.joinPlayerName ? elements.joinPlayerName.value.trim() : '';
+            if (!playerName) {
+                alert('Name is required');
+                return;
+            }
+            
+            gameState.socket.emit('join_room', {
+                roomId: gameState.selectedRoomId,
+                playerName: playerName
+            });
+        
+            hideJoinModal();
+        }
+
+        // Game actions
+        function createRoom() {
+            const playerName = elements.createPlayerName ? elements.createPlayerName.value.trim() : '';
+            const roomName = elements.roomName ? elements.roomName.value.trim() : `${playerName}'s room`;
+            const language = elements.roomLanguage ? elements.roomLanguage.value : 'en';
+            
+            if (!playerName) {
+                alert('Name is required');
+                return;
+            }
+            
+            gameState.socket.emit('create_room', {
+                playerName: playerName,
+                roomName: roomName,
+                language: language
+            });
+        }
+
+        function refreshRooms() {
+            gameState.socket.emit('get_rooms', {});
+        }
+
+        function startGame() {
+            gameState.socket.emit('start_game', {});
+        }
+
+        function resetGame() {
+            gameState.socket.emit('reset_game', {});
+        }
+
+        function leaveRoom() {
+            gameState.socket.emit('leave_room', {});
+        }
+
+        function sendMessage() {
+            const message = elements.messageInput ? elements.messageInput.value.trim() : '';
+            if (message) {
+                gameState.socket.emit('send_message', { message: message });
+                if (elements.messageInput) elements.messageInput.value = '';
+            }
+        }
+
+        function backToLobby() {
+            leaveRoom();
+        }
+
+        function addChatMessage(type, message, player = null) {
+            if (!elements.chatMessages) return;
+            
+            const chatMessages = elements.chatMessages;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            let messageText = message;
+            if (type === 'player' && player) {
+                messageText = `${player.name}: ${message}`;
+            }
+            
+            messageDiv.textContent = messageText;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Make functions available globally
+        window.showJoinModal = showJoinModal;
+        window.confirmJoinRoom = confirmJoinRoom;
+
+        // Initialize the game when page has been loaded
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

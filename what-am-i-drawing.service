@@ -1,0 +1,30 @@
+[Unit]
+Description=What Am I Drawing?
+Documentation=https://github.com/fredrik-stigsson/what-am-i-drawing
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/what-am-i-drawing
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=what-am-i-drawing
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/what-am-i-drawing
+
+# Environment variables if needed
+Environment=NODE_ENV=production
+Environment=PORT=3001
+
+[Install]
+WantedBy=multi-user.target

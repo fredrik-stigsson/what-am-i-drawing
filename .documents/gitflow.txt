@@ -1,0 +1,17 @@
+# Initialize project
+git init
+
+# Get .gitignore file
+wget https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Node.gitignore -O .gitignore
+
+# Add and commit initial release
+git add --all
+git status
+git commit -m 'Initial release'
+git status
+git branch -M main
+git status
+
+# Push initial release to remote repository
+git remote add origin https://github.com/fredrik-stigsson/what-am-i-drawing.git
+git push -u origin main

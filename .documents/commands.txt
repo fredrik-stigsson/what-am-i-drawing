@@ -1,0 +1,12 @@
+# Install
+npm install --omit=dev
+
+# Update
+npm outdated
+npm audit
+npm audit fix
+npm audit fix --force
+npm update
+
+# Launch program
+npm start
