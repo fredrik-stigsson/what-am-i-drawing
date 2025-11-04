@@ -6,7 +6,13 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  // Force polling or configure transports
+  transports: ['polling'],
+  allowEIO3: true, // Enable Engine.IO v3 compatibility
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -37,7 +43,7 @@ class GameRoom {
     this.host = host.id;
     this.hostPlayer = host;
     this.gameState = null;
-    this._status = 'waiting'; // Initialize _status directly
+    this._status = 'waiting';
     this.createdAt = Date.now();
     this.maxPlayers = 8;
     
@@ -45,7 +51,6 @@ class GameRoom {
     
     this.addPlayer(host);
     this.updateStatistics('add');
-    
   }
 
   addPlayer(player) {
@@ -68,7 +73,6 @@ class GameRoom {
     if (player) {
       this.players.delete(playerId);
       
-      // Add chat message about player leaving
       this.broadcastToRoom('chat_message', {
         player: { name: 'System' },
         message: `${player.name} left the game`,
@@ -81,7 +85,6 @@ class GameRoom {
         this.host = newHostId;
         this.hostPlayer = this.players.get(newHostId);
         
-        // Notify about new host
         this.broadcastToRoom('chat_message', {
           player: { name: 'System' },
           message: `${this.hostPlayer.name} is now the host`,
@@ -96,9 +99,9 @@ class GameRoom {
         host: this.host
       });
 
-      // Check if game should end (only 1 player left)
+      // Check if game should end due to insufficient players
       if (this.status === 'playing' && this.players.size <= 1) {
-        this.endGameDueToInsufficientPlayers();
+        this.checkForWinner(true); // Pass true to indicate insufficient players
       } else if (this.players.size === 0) {
         this.cleanupRoom();
       } else {
@@ -108,35 +111,26 @@ class GameRoom {
   }
 
   cleanupRoom() {
-    
-    // 1. Clear chat history
     if (roomChatHistory.has(this.id)) {
       roomChatHistory.delete(this.id);
     }
     
-    // 2. Clear any game state intervals
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
     
-    // 3. Remove all players from this room
     this.players.forEach((player, playerId) => {
       player.room = null;
     });
     this.players.clear();
     
-    // 4. Update statistics before removing
     this.updateStatistics('remove');
+    rooms.delete(this.id);
     
-    // 5. Remove room from rooms map
-    const wasDeleted = rooms.delete(this.id);
-    
-    // 6. Force garbage collection by nullifying references
     this.gameState = null;
     this.hostPlayer = null;
     
-    // 7. Broadcast the updated room list
     this.broadcastGlobalRoomListUpdate();
   }
 
@@ -147,7 +141,6 @@ class GameRoom {
       timestamp: Date.now()
     });
     
-    // Keep only last 100 messages to prevent memory issues
     if (history.length > 100) {
       history.splice(0, history.length - 100);
     }
@@ -264,7 +257,6 @@ class GameRoom {
     }
 
     this.timerInterval = setInterval(() => {
-      // Check if game state still exists (game might have ended)
       if (!this.gameState || this.status !== 'playing') {
         clearInterval(this.timerInterval);
         return;
@@ -330,73 +322,64 @@ class GameRoom {
     }
   }
 
-  checkForWinner() {
+  checkForWinner(insufficientPlayers = false) {
     const WINNING_SCORE = 1000;
     
-    // Check if anyone reached winning score
-    for (const [playerId, score] of Object.entries(this.gameState.scores)) {
-      if (score >= WINNING_SCORE) {
-        const winner = this.players.get(playerId);
-        if (winner) {
-          this.broadcastToRoom('game_ended', {
-            winner: this.serializePlayer(winner),
-            winnerScore: score
-          });
-          this.status = 'finished';
-          if (this.timerInterval) {
-            clearInterval(this.timerInterval);
+    // Check if anyone reached winning score (normal game end)
+    if (!insufficientPlayers) {
+      for (const [playerId, score] of Object.entries(this.gameState.scores)) {
+        if (score >= WINNING_SCORE) {
+          const winner = this.players.get(playerId);
+          if (winner) {
+            this.broadcastToRoom('game_ended', {
+              winner: this.serializePlayer(winner),
+              winnerScore: score
+            });
+            this.status = 'finished';
+            if (this.timerInterval) {
+              clearInterval(this.timerInterval);
+            }
+            this.broadcastGlobalRoomListUpdate();
+            
+            this.broadcastToRoom('chat_message', {
+              player: { name: 'System' },
+              message: `🎉 ${winner.name} won the game with ${score} points! 🎉`,
+              timestamp: Date.now(),
+              type: 'system'
+            });
           }
-          this.broadcastGlobalRoomListUpdate();
-          
-          // Add congratulatory message
-          this.broadcastToRoom('chat_message', {
-            player: { name: 'System' },
-            message: `🎉 ${winner.name} won the game with ${score} points! 🎉`,
-            timestamp: Date.now(),
-            type: 'system'
-          });
+          return;
         }
-        break;
       }
     }
     
-    // Also check if we have enough players to continue
-    if (this.status === 'playing' && this.players.size <= 1) {
-      this.endGameDueToInsufficientPlayers();
-    }
-  }
+    // Check if we have enough players to continue
+    if (this.status === 'playing' && (this.players.size <= 1 || insufficientPlayers)) {
+      // Game ends due to insufficient players
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+      }
+      
+      let remainingPlayer = null;
+      if (this.players.size === 1) {
+        const playerId = Array.from(this.players.keys())[0];
+        remainingPlayer = this.players.get(playerId);
+      }
 
-  endGameDueToInsufficientPlayers() {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
-    
-    // Find the remaining player (if any)
-    let remainingPlayer = null;
-    if (this.players.size === 1) {
-      const playerId = Array.from(this.players.keys())[0];
-      remainingPlayer = this.players.get(playerId);
-    }
-    
-    this.broadcastToRoom('chat_message', {
-      player: { name: 'System' },
-      message: 'Game ended - not enough players to continue',
-      timestamp: Date.now(),
-      type: 'system'
-    });
+      this.broadcastToRoom('game_ended', {
+        winner: this.serializePlayer(remainingPlayer),
+        winnerScore: 'Game ended - not enough players to continue.'
+      });
 
-    this.broadcastToRoom('game_ended_early', {
-      reason: 'not_enough_players',
-      remainingPlayer: remainingPlayer ? this.serializePlayer(remainingPlayer) : null,
-      message: remainingPlayer ? 
-        `Game ended. Only ${remainingPlayer.name} remains.` : 
-        'Game ended. All players have left.'
-    });
-
-    // Set status to 'finished' instead of 'waiting'
-    this.status = 'finished';
-    this.gameState = null;
-    this.broadcastGlobalRoomListUpdate();
+      this.status = 'finished';
+      this.gameState = null;
+      
+      if (this.players.size === 0) {
+        this.cleanupRoom();
+      } else {
+        this.broadcastGlobalRoomListUpdate();
+      }
+    }
   }
 
   updateCanvas(canvasData) {
@@ -438,12 +421,10 @@ class GameRoom {
     const availableRooms = getAvailableRooms();
     const statistics = getRoomStatistics();
     
-    // Broadcast to ALL connected clients using io.emit
     io.emit('room_list_updated', {
       rooms: availableRooms,
       statistics: statistics
     });
-    
   }
 
   getSerializedPlayers() {
@@ -465,7 +446,7 @@ class GameRoom {
       name: this.name,
       playerCount: this.players.size,
       maxPlayers: this.maxPlayers,
-      status: this.status, // Use the getter to ensure correct status
+      status: this.status,
       language: this.language,
       host: hostPlayer ? hostPlayer.name : 'Unknown'
     };
@@ -478,7 +459,6 @@ function generatePlayerId() {
 }
 
 function getAvailableRooms() {
-  // Clean up rooms with no players
   let roomsCleaned = 0;
   rooms.forEach((room, roomId) => {
     if (room.players.size === 0) {
@@ -487,7 +467,6 @@ function getAvailableRooms() {
     }
   });
   
-  // Only show waiting rooms (exclude playing and finished rooms)
   const availableRooms = Array.from(rooms.values())
     .filter(room => room.status === 'waiting')
     .map(room => room.serialize());
@@ -495,9 +474,7 @@ function getAvailableRooms() {
   return availableRooms;
 }
 
-// Add a function to get room statistics
 function getRoomStatistics() {
-  // Recalculate to ensure accuracy
   const recalculatedStats = {
     total: rooms.size,
     waiting: 0,
@@ -512,9 +489,7 @@ function getRoomStatistics() {
     }
   });
 
-  // Update the global statistics
   Object.assign(roomStatistics, recalculatedStats);
-
   return recalculatedStats;
 }
 
@@ -523,10 +498,41 @@ io.on('connection', (socket) => {
   
   let currentPlayer = null;
 
-  // Send initial room list and statistics immediately on connection
   socket.emit('room_list_updated', {
     rooms: getAvailableRooms(),
     statistics: getRoomStatistics()
+  });
+
+  // Add reconnection support
+  socket.on('rejoin_room', (data) => {
+    const { roomId, playerId } = data;
+    const room = rooms.get(roomId);
+    const player = players.get(playerId);
+    
+    if (room && player) {
+      player.socket = socket;
+      currentPlayer = player;
+      
+      socket.emit('room_joined', {
+        room: room.serialize(),
+        player: room.serializePlayer(player),
+        players: room.getSerializedPlayers(),
+        host: room.host
+      });
+      
+      if (room.gameState && room.gameState.canvasData) {
+        socket.emit('canvas_updated', {
+          canvasData: room.gameState.canvasData
+        });
+      }
+      
+      const chatHistory = room.getChatHistory();
+      socket.emit('chat_history', {
+        messages: chatHistory
+      });
+      
+      console.log(`Player ${player.name} reconnected to room ${roomId}`);
+    }
   });
 
   socket.on('create_room', (data) => {
@@ -573,7 +579,6 @@ io.on('connection', (socket) => {
       }
       players.delete(currentPlayer.id);
     }
-    // Room list will auto-update via removePlayer broadcast
   });
 
   function handleCreateRoom(socket, data) {
@@ -606,7 +611,6 @@ io.on('connection', (socket) => {
       players: room.getSerializedPlayers()
     });
 
-    // Broadcast room list update to ALL clients after room is fully created
     room.broadcastGlobalRoomListUpdate();
   }
 
@@ -648,7 +652,6 @@ io.on('connection', (socket) => {
 
       room.addPlayer(player);
 
-      // Send chat history to the joining player
       const chatHistory = room.getChatHistory();
       socket.emit('chat_history', {
         messages: chatHistory
@@ -661,7 +664,6 @@ io.on('connection', (socket) => {
         host: room.host
       });
 
-      // Broadcast room list update after player is fully joined
       room.broadcastGlobalRoomListUpdate();
 
     } catch (error) {
@@ -732,9 +734,7 @@ io.on('connection', (socket) => {
         type: 'player'
       };
 
-      // Store the message in chat history
       room.addChatMessage(messageData);
-
       room.broadcastToRoom('chat_message', messageData);
 
       if (room.status === 'playing' && currentPlayer.id !== room.gameState.drawingPlayerId) {

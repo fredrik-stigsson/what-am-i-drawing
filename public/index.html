@@ -215,15 +215,22 @@
 
         /* Game Area Styles */
         .game-area {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
-            align-items: start;
         }
 
-        @media (max-width: 1024px) {
+        @media (min-width: 1025px) {
             .game-area {
-                grid-template-columns: 1fr;
+                flex-direction: row;
+            }
+            
+            .drawing-section {
+                flex: 2;
+            }
+            
+            .game-area > div:last-child {
+                flex: 1;
             }
         }
 
@@ -232,24 +239,63 @@
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
 
         .canvas-container {
             position: relative;
-            width: 100%;
             margin-bottom: 15px;
             border: 3px solid #3498db;
             border-radius: 10px;
+            background: white;
             overflow: hidden;
+            
+            /* Square aspect ratio */
+            width: 100%;
+            aspect-ratio: 1 / 1; /* This makes it square */
+            max-width: 500px; /* Maximum size for large screens */
+            
+            /* Center the canvas */
+            margin-left: auto;
+            margin-right: auto;
+            
+            /* Prevent text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .canvas-container {
+                max-width: 95vw; /* Slightly smaller on mobile */
+                margin: 0 auto 15px auto;
+            }
+        }
+
+        /* Desktop optimizations */
+        @media (min-width: 1024px) {
+            .canvas-container {
+                max-width: 500px; /* Comfortable size for desktop */
+            }
         }
 
         #drawingCanvas {
             background-color: white;
             cursor: crosshair;
-            width: 100%;
-            height: auto;
+            
+            /* Fill the container */
+            width: 100% !important;
+            height: 100% !important;
+            
+            /* Touch handling */
             touch-action: none;
-            display: block;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .tools {
@@ -263,6 +309,8 @@
             background-color: #f8f9fa;
             border-radius: 10px;
             border: 1px solid #e9ecef;
+            width: 100%;
+            max-width: 500px;
         }
 
         .tools-section {
@@ -273,6 +321,7 @@
             background: white;
             border-radius: 8px;
             border: 1px solid #dee2e6;
+            min-height: 50px;
         }
 
         .tools-section label {
@@ -280,6 +329,20 @@
             font-weight: bold;
             color: #495057;
             white-space: nowrap;
+        }
+
+        /* Mobile tools adjustment */
+        @media (max-width: 768px) {
+            .tools {
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .tools-section {
+                margin: 0 5px;
+            }
         }
 
         .color-buttons {
@@ -462,6 +525,7 @@
             border: 2px solid #e9ecef;
             border-radius: 8px;
             font-size: 1rem;
+            width: 150px;
         }
 
         #messageInput:focus {
@@ -485,6 +549,7 @@
             font-weight: bold;
             color: #e74c3c;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            min-width: 60px;
         }
 
         .score {
@@ -504,6 +569,8 @@
             background: #e8f4fc;
             border-radius: 8px;
             border: 2px dashed #3498db;
+            width: 100%;
+            max-width: 500px;
         }
 
         .hidden {
@@ -670,6 +737,20 @@
             transition: all 0.3s ease;
             min-height: 100px;
         }
+
+        /* Connection Status */
+        #connectionStatus {
+            position: relative;
+            display: block;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            font-weight: bold;
+            border-radius: 15px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -678,6 +759,9 @@
             <h1>What Am I Drawing?</h1>
             <p class="subtitle">Draw and guess words together with your friends in real time!</p>
         </header>
+
+        <!-- Connection status -->
+        <div id="connectionStatus" style="color: orange;">🟠 Connecting ...</div>
         
         <!-- Main Menu -->
         <div id="mainMenu">
@@ -707,7 +791,6 @@
                 <div class="menu-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h2>Available Rooms</h2>
-                        <!-- No refresh button needed -->
                     </div>
                     
                     <!-- Statistics display - ALWAYS VISIBLE -->
@@ -738,7 +821,6 @@
                     </div>
                     
                     <div id="roomsList" class="rooms-list">
-                        <!-- Improved no rooms message -->
                         <div id="noRoomsMessage" class="no-rooms" style="display: block;">
                         <div style="font-size: 1.2rem; margin-bottom: 10px; color: #6c757d;">🎨 No rooms available</div>
                         <div style="font-size: 0.9rem; color: #8fa0ad;">
@@ -747,7 +829,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
         
@@ -797,7 +878,6 @@
                 
                 <!-- Right Column: Chat and Players -->
                 <div>
-
                     <!-- Chat Section -->
                     <div class="chat-section">
                         <h2>Guess Chat</h2>
@@ -817,7 +897,6 @@
                             <button id="leaveRoomBtn" class="btn-secondary">Leave Room</button>
                         </div>
                     </div>
-                    
                 </div>
             </div>
         </div>
@@ -849,7 +928,7 @@
 
     <!-- Socket.IO Client Library -->
     <script src="socket.io/socket.io.js"></script>
-<script>
+    <script>
         // Game state
         const gameState = {
             socket: null,
@@ -877,7 +956,11 @@
             lastY: 0,
             currentColor: '#000000',
             currentBrushSize: 5,
-            canvasInitialized: false
+            canvasInitialized: false,
+            usingTouch: false,
+            lastSent: 0,
+            sendDelay: 100,
+            isSending: false
         };
 
         // DOM Elements cache
@@ -942,27 +1025,49 @@
 
         // Setup Socket.IO connection
         function setupSocket() {
-            
-            // Connect to server
+            const socketOptions = {
+                // Force polling or specify transport preference
+                transports: ['polling'], // Use only polling
+                upgrade: false,
+                forceNew: true,
+                timeout: 10000,
+                reconnection: true,
+                reconnectionAttempts: Infinity,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000
+            };
+
             if(window.location.hostname !== 'localhost') {
                 gameState.socket = io({
                     path: '/what-am-i-drawing/socket.io'
                 });
+            } else {
+                gameState.socket = io(socketOptions);
             }
-            else {
-                gameState.socket = io();
-            }
-            
+
+            // Enhanced connection handling
             gameState.socket.on('connect', () => {
                 console.log('Connected to server');
+                updateConnectionStatus(true);
             });
 
-            gameState.socket.on('disconnect', () => {
-                console.log('Disconnected from server');
+            gameState.socket.on('disconnect', (reason) => {
+                console.log('Disconnected from server:', reason);
+                updateConnectionStatus(false);
+                
+                if (reason === 'io server disconnect') {
+                    gameState.socket.connect();
+                }
             });
 
-            gameState.socket.on('connect_error', () => {
-                console.log('Connection error');
+            gameState.socket.on('connect_error', (error) => {
+                console.log('Connection error:', error);
+                updateConnectionStatus(false);
+            });
+
+            gameState.socket.on('reconnect', (attemptNumber) => {
+                console.log('Reconnected after', attemptNumber, 'attempts');
+                updateConnectionStatus(true);
             });
 
             // Game event listeners
@@ -983,10 +1088,20 @@
             gameState.socket.on('chat_history', handleChatHistory);
             gameState.socket.on('error', handleError);
             gameState.socket.on('left_room', handleLeftRoom);
-            gameState.socket.on('game_ended_early', handleGameEndedEarly);
         }
 
-        // Setup event listeners with null checks
+        function updateConnectionStatus(connected) {
+            let statusElement = document.getElementById('connectionStatus');
+            if (!statusElement) {
+                statusElement = document.createElement('div');
+                statusElement.id = 'connectionStatus';
+                document.body.appendChild(statusElement);
+            }
+            statusElement.textContent = connected ? '🟢 Connected' : '🔴 Disconnected';
+            statusElement.style.color = connected ? 'green' : 'red';
+        }
+
+        // Setup event listeners
         function setupEventListeners() {
             // Main menu
             if (elements.createRoomBtn) {
@@ -1017,7 +1132,7 @@
                 elements.clearCanvasBtn.addEventListener('click', clearCanvas);
             }
             
-            // Color buttons - use event delegation
+            // Color buttons
             document.addEventListener('click', (e) => {
                 if (e.target.classList.contains('color-btn')) {
                     document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
@@ -1029,11 +1144,12 @@
                 }
             });
 
-            // Brush size
+            // Brush size with scaling
             if (elements.brushSize && elements.brushSizeValue) {
                 elements.brushSize.addEventListener('input', (e) => {
-                    canvasState.currentBrushSize = parseInt(e.target.value);
-                    elements.brushSizeValue.textContent = canvasState.currentBrushSize;
+                    const baseSize = parseInt(e.target.value);
+                    canvasState.currentBrushSize = baseSize;
+                    elements.brushSizeValue.textContent = baseSize;
                     if (canvasState.ctx) {
                         canvasState.ctx.lineWidth = canvasState.currentBrushSize;
                     }
@@ -1055,7 +1171,7 @@
             }
         }
 
-        // Setup canvas for drawing
+        // Setup canvas for drawing with square aspect ratio
         function setupCanvas() {
             if (!elements.drawingCanvas) {
                 console.error('Canvas element not found');
@@ -1065,49 +1181,120 @@
             const canvas = elements.drawingCanvas;
             canvasState.ctx = canvas.getContext('2d');
             
-            // Set canvas size
-            const resizeCanvas = () => {
+            // Fixed internal resolution for consistent drawing
+            const INTERNAL_SIZE = 512;
+            
+            const initializeCanvas = () => {
                 const container = canvas.parentElement;
-                if (container) {
-                    const rect = container.getBoundingClientRect();
-                    canvas.width = rect.width;
-                    canvas.height = 445;
-                    
-                    // Set initial canvas style
-                    canvasState.ctx.fillStyle = 'white';
-                    canvasState.ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    canvasState.ctx.lineJoin = 'round';
-                    canvasState.ctx.lineCap = 'round';
-                    canvasState.ctx.lineWidth = canvasState.currentBrushSize;
-                    canvasState.ctx.strokeStyle = canvasState.currentColor;
-                    canvasState.canvasInitialized = true;
-                }
+                if (!container) return;
+                
+                const displaySize = Math.min(container.clientWidth, container.clientHeight);
+                
+                // Set internal resolution (for drawing)
+                canvas.width = INTERNAL_SIZE;
+                canvas.height = INTERNAL_SIZE;
+                
+                // Set display size (what users see)
+                canvas.style.width = displaySize + 'px';
+                canvas.style.height = displaySize + 'px';
+                
+                // Reset transform and set proper scaling
+                canvasState.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                
+                // Calculate scale factor
+                const scale = INTERNAL_SIZE / displaySize;
+                canvasState.ctx.scale(scale, scale);
+                
+                // Initialize canvas with white background
+                canvasState.ctx.fillStyle = 'white';
+                canvasState.ctx.fillRect(0, 0, displaySize, displaySize);
+                
+                // Set drawing properties
+                canvasState.ctx.lineJoin = 'round';
+                canvasState.ctx.lineCap = 'round';
+                canvasState.ctx.lineWidth = canvasState.currentBrushSize;
+                canvasState.ctx.strokeStyle = canvasState.currentColor;
+                canvasState.canvasInitialized = true;
             };
 
-            // Initial resize
-            setTimeout(() => {
-                resizeCanvas();
-            }, 100);
+            // Initialize canvas
+            initializeCanvas();
 
-            window.addEventListener('resize', resizeCanvas);
+            // Handle resize
+            let lastContainerSize = 0;
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                if (!canvasState.canvasInitialized || !gameState.isDrawing) return;
+                
+                const container = elements.drawingCanvas.parentElement;
+                const currentSize = Math.min(container.clientWidth, container.clientHeight);
+                
+                // Only resize if the size change is significant (more than 10 pixels)
+                if (Math.abs(currentSize - lastContainerSize) < 10) return;
+                
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    // Save current canvas content
+                    const currentCanvasData = elements.drawingCanvas.toDataURL();
+                    
+                    // Update canvas dimensions
+                    elements.drawingCanvas.style.width = currentSize + 'px';
+                    elements.drawingCanvas.style.height = currentSize + 'px';
+                    
+                    // Recalculate scale
+                    const INTERNAL_SIZE = 512;
+                    const scale = INTERNAL_SIZE / currentSize;
+                    
+                    canvasState.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    canvasState.ctx.scale(scale, scale);
+                    
+                    // Restore content
+                    const img = new Image();
+                    img.onload = function() {
+                        canvasState.ctx.drawImage(img, 0, 0, currentSize, currentSize);
+                    };
+                    img.src = currentCanvasData;
+                    
+                    lastContainerSize = currentSize;
+                }, 300); // Even longer delay for better performance
+            });
 
-            // Mouse events
+            // Event listeners
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('mouseout', handleMouseOut);
 
-            // Touch events for mobile
             canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-            canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('touchend', handleTouchEnd);
+            canvas.addEventListener('touchcancel', handleTouchEnd);
+
+            setupTouchPrevention();
         }
 
-        // Drawing functions
+        function setupTouchPrevention() {
+            const canvas = elements.drawingCanvas;
+            
+            document.addEventListener('touchstart', function(e) {
+                if ((e.target === canvas || canvas.contains(e.target)) && gameState.isDrawing) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (canvasState.isDrawing && canvasState.usingTouch) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+
         function startDrawing(e) {
             if (!gameState.isDrawing || !canvasState.canvasInitialized) return;
             
             e.preventDefault();
+            e.stopPropagation();
+            
             canvasState.isDrawing = true;
             const pos = getMousePos(e);
             [canvasState.lastX, canvasState.lastY] = [pos.x, pos.y];
@@ -1117,8 +1304,10 @@
             canvasState.ctx.arc(canvasState.lastX, canvasState.lastY, canvasState.currentBrushSize / 2, 0, Math.PI * 2);
             canvasState.ctx.fillStyle = canvasState.currentColor;
             canvasState.ctx.fill();
+            canvasState.ctx.beginPath();
         }
 
+        // Drawing functions
         function draw(e) {
             if (!canvasState.isDrawing || !gameState.isDrawing || !canvasState.canvasInitialized) return;
             
@@ -1134,22 +1323,66 @@
             
             [canvasState.lastX, canvasState.lastY] = [pos.x, pos.y];
             
-            // Send canvas data to server
-            const canvasData = elements.drawingCanvas.toDataURL();
-            gameState.socket.emit('update_canvas', { canvasData });
+            // Throttled canvas data sending
+            sendCanvasDataThrottled();
+        }
+
+        function sendCanvasDataThrottled() {
+            const now = Date.now();
+            if (now - canvasState.lastSent < canvasState.sendDelay || canvasState.isSending) {
+                return;
+            }
+            
+            canvasState.lastSent = now;
+            canvasState.isSending = true;
+            
+            requestAnimationFrame(() => {
+                try {
+                    const canvasData = getCanvasDataAtInternalResolution();
+                    if (gameState.socket && gameState.socket.connected) {
+                        gameState.socket.emit('update_canvas', { canvasData });
+                    }
+                } catch (error) {
+                    console.error('Error sending canvas data:', error);
+                } finally {
+                    canvasState.isSending = false;
+                }
+            });
+        }
+
+        function getCanvasDataAtInternalResolution() {
+            // Return compressed data at consistent resolution
+            return elements.drawingCanvas.toDataURL('image/jpeg', 0.5);
         }
 
         function stopDrawing() {
-            canvasState.isDrawing = false;
+            if (canvasState.isDrawing) {
+                canvasState.isDrawing = false;
+                canvasState.ctx.beginPath();
+            }
+        }
+
+        function handleMouseOut(e) {
+            if (!isTouchDevice()) {
+                stopDrawing();
+            }
+        }
+
+        function isTouchDevice() {
+            return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         }
 
         function handleTouchStart(e) {
             if (!gameState.isDrawing) return;
             e.preventDefault();
+            canvasState.usingTouch = true;
+            
             const touch = e.touches[0];
             const mouseEvent = new MouseEvent('mousedown', {
                 clientX: touch.clientX,
-                clientY: touch.clientY
+                clientY: touch.clientY,
+                bubbles: true,
+                cancelable: true
             });
             elements.drawingCanvas.dispatchEvent(mouseEvent);
         }
@@ -1157,44 +1390,76 @@
         function handleTouchMove(e) {
             if (!gameState.isDrawing) return;
             e.preventDefault();
+            
             const touch = e.touches[0];
             const mouseEvent = new MouseEvent('mousemove', {
                 clientX: touch.clientX,
-                clientY: touch.clientY
+                clientY: touch.clientY,
+                bubbles: true,
+                cancelable: true
+            });
+            elements.drawingCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function handleTouchEnd(e) {
+            if (!gameState.isDrawing) return;
+            e.preventDefault();
+            canvasState.usingTouch = false;
+            
+            const mouseEvent = new MouseEvent('mouseup', {
+                bubbles: true,
+                cancelable: true
             });
             elements.drawingCanvas.dispatchEvent(mouseEvent);
         }
 
         function getMousePos(e) {
-
-            const rect = elements.drawingCanvas.getBoundingClientRect();
-            const scaleX = elements.drawingCanvas.width / rect.width;
-            const scaleY = elements.drawingCanvas.height / rect.height;
+            const canvas = elements.drawingCanvas;
+            const rect = canvas.getBoundingClientRect();
             
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            let clientX, clientY;
             
+            if (e.type.includes('touch')) {
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else if (e.changedTouches && e.changedTouches.length > 0) {
+                    clientX = e.changedTouches[0].clientX;
+                    clientY = e.changedTouches[0].clientY;
+                } else {
+                    return { x: 0, y: 0 };
+                }
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            // Get position relative to canvas in display pixels
+            const displayX = clientX - rect.left;
+            const displayY = clientY - rect.top;
+            
+            // The canvas context is already scaled, so we use display coordinates directly
+            // The scaling is handled by the canvas context transform
             return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
+                x: Math.max(0, Math.min(rect.width, displayX)),
+                y: Math.max(0, Math.min(rect.height, displayY))
             };
         }
 
         function clearCanvas() {
             if (!canvasState.ctx || !canvasState.canvasInitialized) return;
             
+            const container = elements.drawingCanvas.parentElement;
+            const displaySize = Math.min(container.clientWidth, container.clientHeight);
+            
             canvasState.ctx.fillStyle = 'white';
-            canvasState.ctx.fillRect(0, 0, elements.drawingCanvas.width, elements.drawingCanvas.height);
+            canvasState.ctx.fillRect(0, 0, displaySize, displaySize);
             gameState.socket.emit('clear_canvas', {});
         }
 
-        function clearChatMessages() {
-            if (elements.chatMessages) {
-                elements.chatMessages.innerHTML = '';
-            }
-        }
+        // ... (rest of the JavaScript code remains the same as your original, including all the event handlers and UI functions)
 
-        // Socket event handlers
+        // Socket event handlers (keep all your existing handlers)
         function handleRoomCreated(data) {
             gameState.currentRoom = data.room;
             gameState.currentPlayer = data.player;
@@ -1202,9 +1467,6 @@
             gameState.isHost = true;
             gameState.currentLanguage = data.room.language;
 
-            // Clear any existing chat
-            clearChatMessages();
-            
             updateUI();
             showGameArea();
             updatePlayersList();
@@ -1218,9 +1480,6 @@
             gameState.isHost = data.host === gameState.currentPlayer.id;
             gameState.currentLanguage = data.room.language;
 
-            // Clear any existing chat before showing new room
-            clearChatMessages();
-            
             updateUI();
             showGameArea();
             updatePlayersList();
@@ -1228,16 +1487,11 @@
         }
 
         function handleRoomListUpdated(data) {
-
-            // Always update rooms list (even if empty)
             updateRoomsList(data.rooms || []);
-            
-            // Always update statistics (even if zero)
             if (data.statistics) {
                 gameState.roomStatistics = data.statistics;
                 updateRoomStatistics(data.statistics);
             } else {
-                // If no statistics provided, use zeros
                 updateRoomStatistics({
                     total: 0,
                     waiting: 0,
@@ -1249,11 +1503,7 @@
 
         function handleChatHistory(data) {
             if (!elements.chatMessages) return;
-            
-            // Clear current messages
             elements.chatMessages.innerHTML = '';
-            
-            // Add historical messages
             data.messages.forEach(message => {
                 addChatMessage(message.type || 'player', message.message, message.player);
             });
@@ -1289,7 +1539,6 @@
             gameState.players = data.players;
             
             clearCanvas();
-            clearChatMessages();
             updateUI();
             updatePlayersList();
             if (elements.wordToDraw) {
@@ -1346,35 +1595,6 @@
             showWinnerSection(data.winner, data.winnerScore);
         }
 
-        function handleGameEndedEarly(data) {
-            gameState.gameStarted = false;
-            gameState.isDrawing = false;
-            
-            // Add system message about game ending
-            clearChatMessages();
-            addChatMessage('system', data.message);
-            
-            // Show appropriate message based on reason
-            if (data.reason === 'not_enough_players') {
-                if (data.remainingPlayer && data.remainingPlayer.id === gameState.currentPlayer.id) {
-                    addChatMessage('system', 'You are the only player remaining. The game has ended.');
-                }
-            }
-            
-            // Reset game state
-            gameState.gameState = null;
-            if (elements.wordToDraw) {
-                elements.wordToDraw.textContent = '';
-            }
-            if (elements.timer) {
-                elements.timer.textContent = '60';
-            }
-            
-            clearCanvas();
-            updateUI();
-            updatePlayersList();
-        }
-
         function handleChatMessage(data) {
             addChatMessage('player', data.message, data.player);
         }
@@ -1384,8 +1604,13 @@
             
             const img = new Image();
             img.onload = function() {
-                canvasState.ctx.clearRect(0, 0, elements.drawingCanvas.width, elements.drawingCanvas.height);
-                canvasState.ctx.drawImage(img, 0, 0);
+                const container = elements.drawingCanvas.parentElement;
+                const displaySize = Math.min(container.clientWidth, container.clientHeight);
+                
+                // Clear and redraw at proper display size
+                canvasState.ctx.fillStyle = 'white';
+                canvasState.ctx.fillRect(0, 0, displaySize, displaySize);
+                canvasState.ctx.drawImage(img, 0, 0, displaySize, displaySize);
             };
             img.src = data.canvasData;
         }
@@ -1396,12 +1621,15 @@
 
         function handleLeftRoom() {
             showMainMenu();
-            // Refresh rooms to get updated list
             gameState.socket.emit('get_rooms', {});
         }
 
         // UI functions
         function showGameArea() {
+            
+            // Always clean up before showing game area
+            cleanupPreviousRoom();
+
             if (elements.mainMenu) elements.mainMenu.classList.add('hidden');
             if (elements.gameArea) elements.gameArea.classList.remove('hidden');
             if (elements.winnerSection) elements.winnerSection.classList.add('hidden');
@@ -1424,10 +1652,16 @@
 
         function showWinnerSection(winner, score) {
             if (elements.congratulationsText) {
-                elements.congratulationsText.textContent = `Congratulations ${winner.name}!`;
+                elements.congratulationsText.textContent = `Congrats ${winner.name}!`;
             }
             if (elements.winnerMessage) {
-                elements.winnerMessage.textContent = `You won the game with ${score} points!`;
+                if(typeof score === 'number') {
+                    elements.winnerMessage.textContent = `You won the game with ${score} points!`;
+                }
+                else {
+                    elements.winnerMessage.textContent = score;
+                }
+                
             }
             if (elements.gameArea) elements.gameArea.classList.add('hidden');
             if (elements.winnerSection) elements.winnerSection.classList.remove('hidden');
@@ -1482,7 +1716,6 @@
             const roomsList = elements.roomsList;
             let noRoomsMessage = document.getElementById('noRoomsMessage');
             
-            // If noRoomsMessage doesn't exist, create it
             if (!noRoomsMessage) {
                 noRoomsMessage = document.createElement('div');
                 noRoomsMessage.id = 'noRoomsMessage';
@@ -1496,18 +1729,14 @@
                 roomsList.appendChild(noRoomsMessage);
             }
             
-            // Remove all room items
             const roomItems = roomsList.querySelectorAll('.room-item');
             roomItems.forEach(room => room.remove());
             
             if (!rooms || rooms.length === 0) {
-                // Show no rooms message
                 noRoomsMessage.style.display = 'block';
             } else {
-                // Hide no rooms message
                 noRoomsMessage.style.display = 'none';
                 
-                // Add new rooms
                 rooms.forEach(room => {
                     const roomDiv = document.createElement('div');
                     roomDiv.className = 'room-item';
@@ -1540,10 +1769,8 @@
             const statsContainer = elements.roomStatistics;
             if (!statsContainer) return;
             
-            // Statistics container is always visible now
             statsContainer.style.display = 'block';
             
-            // Update each statistic
             const statItems = statsContainer.querySelectorAll('.stat-item');
             statItems.forEach((item, index) => {
                 const statValue = item.querySelector('.stat-value');
@@ -1561,8 +1788,6 @@
                     }
                     
                     statValue.textContent = value;
-                    
-                    // Optional: Add visual feedback when stats update
                     statValue.style.transform = 'scale(1.1)';
                     setTimeout(() => {
                         statValue.style.transform = 'scale(1)';
@@ -1572,44 +1797,48 @@
         }
 
         function updateUI() {
-            // Update button states
             if (elements.startGameBtn) {
                 const isGameFinished = gameState.currentRoom && gameState.currentRoom.status === 'finished';
                 elements.startGameBtn.disabled = !gameState.isHost || gameState.gameStarted || isGameFinished;
                 
-                // Update button text if game is finished
                 if (isGameFinished) {
-                elements.startGameBtn.textContent = 'Game Finished';
+                    elements.startGameBtn.textContent = 'Game Finished';
                 } else if (gameState.gameStarted) {
-                elements.startGameBtn.textContent = 'Game in Progress';
+                    elements.startGameBtn.textContent = 'Game in Progress';
                 } else {
-                elements.startGameBtn.textContent = 'Start Game';
+                    elements.startGameBtn.textContent = 'Start Game';
+                }
+            }
+
+            if (elements.leaveRoomBtn) {
+                elements.leaveRoomBtn.disabled = false;
+                if (gameState.currentRoom && gameState.currentRoom.status === 'finished') {
+                    elements.leaveRoomBtn.textContent = 'Return to Lobby';
+                } else {
+                    elements.leaveRoomBtn.textContent = 'Leave Room';
                 }
             }
             
-            // Update room info to show status
             if (elements.roomInfo && gameState.currentRoom) {
                 const languageText = gameState.currentLanguage === 'sv' ? 'Swedish' : 'English';
                 const statusText = gameState.currentRoom.status === 'finished' ? ' (Finished)' : '';
                 elements.roomInfo.textContent = `Room: ${gameState.currentRoom.name} (${languageText})${statusText}`;
             }
             
-            // Update canvas accessibility - disable if game is finished
             if (elements.drawingCanvas) {
                 elements.drawingCanvas.style.cursor = gameState.isDrawing ? 'crosshair' : 'not-allowed';
                 elements.drawingCanvas.style.opacity = gameState.isDrawing ? '1' : '0.7';
             }
             
-            // Update chat input - disable if game is finished or user is drawing
             if (elements.messageInput) {
                 const isGameFinished = gameState.currentRoom && gameState.currentRoom.status === 'finished';
                 elements.messageInput.disabled = gameState.isDrawing || isGameFinished;
                 if (isGameFinished) {
-                elements.messageInput.placeholder = 'Game has ended';
+                    elements.messageInput.placeholder = 'Game has ended';
                 } else if (gameState.isDrawing) {
-                elements.messageInput.placeholder = 'You are drawing, waiting for guesses...';
+                    elements.messageInput.placeholder = 'You are drawing, waiting for guesses...';
                 } else {
-                elements.messageInput.placeholder = 'Type your guess here...';
+                    elements.messageInput.placeholder = 'Type your guess here...';
                 }
             }
             
@@ -1618,9 +1847,8 @@
                 elements.sendMessageBtn.disabled = gameState.isDrawing || isGameFinished;
             }
             
-            // Update score
             updateScore();
-            }
+        }
 
         // Modal functions
         function showJoinModal(roomId) {
@@ -1698,7 +1926,6 @@
             if (type === 'player' && player) {
                 messageText = `${player.name}: ${message}`;
             } else if (type === 'system' || type === 'game-ended') {
-                // System messages don't need player names
                 messageText = message;
             }
             
@@ -1710,6 +1937,53 @@
         // Make functions available globally
         window.showJoinModal = showJoinModal;
         window.confirmJoinRoom = confirmJoinRoom;
+
+        function cleanupPreviousRoom() {
+
+            // Clear all UI elements
+            const elementsToClear = {
+                chatMessages: '',
+                playersList: '',
+                wordToDraw: '',
+                roomInfo: '',
+                timer: '60',
+                yourScore: 'Your score: 0'
+            };
+            
+            Object.keys(elementsToClear).forEach(elementId => {
+                if (elements[elementId]) {
+                    elements[elementId].innerHTML = elementsToClear[elementId];
+                }
+            });
+            
+            // Clear input fields
+            if (elements.messageInput) {
+                elements.messageInput.value = '';
+                elements.messageInput.disabled = false;
+            }
+            
+            // Reset canvas
+            if (canvasState.ctx && canvasState.canvasInitialized && elements.drawingCanvas) {
+                const container = elements.drawingCanvas.parentElement;
+                if (container) {
+                    const displaySize = Math.min(container.clientWidth, container.clientHeight);
+                    canvasState.ctx.fillStyle = 'white';
+                    canvasState.ctx.fillRect(0, 0, displaySize, displaySize);
+                }
+            }
+            
+            // Reset game state
+            const resetState = {
+                gameStarted: false,
+                isDrawing: false,
+                gameState: null
+            };
+            
+            Object.assign(gameState, resetState);
+            
+            // Update UI to reflect clean state
+            updateUI();
+        }
 
         // Initialize the game when page has been loaded
         window.addEventListener('load', init);

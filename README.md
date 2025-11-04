@@ -25,3 +25,7 @@ systemctl daemon-reload
 systemctl enable what-am-i-drawing
 systemctl start what-am-i-drawing
 ```
+
+## 🚀 Quick Play
+
+**Unblock Your Inner Artist? [Play it now!](https://games.annytab.com/what-am-i-drawing/)**
